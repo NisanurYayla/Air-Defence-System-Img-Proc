@@ -25,4 +25,3 @@ class DetectorModel:
         return self.model is not None
 
 
-#eklenecekler; !!!! device
