@@ -10,3 +10,6 @@ data/videos/*
 data/images/*
 !data/videos/.gitkeep
 !data/images/.gitkeep
+data/debug/*
+# Ama örnek (örnek_sonuc.jpg gibi) dosyaların gitmesine izin ver
+!data/debug/ornek_*.jpg
