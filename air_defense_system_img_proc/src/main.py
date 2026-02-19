@@ -1,25 +1,21 @@
 import time
 import os
+import cv2
 from ultralytics import YOLO
 
 from inference.detector import Detector
-from inference.performance_manager import PerformanceManager
 from inputs.video_input import VideoInput
-from visualization.visualizer import draw_detections, draw_telemetry
-import cv2
-
+from visualization.visualizer import draw_detections, draw_tracks, draw_telemetry
+from tracking.tracker import Tracker
 
 
 def main():
     print("[INFO] Sistem başlatıldı")
-    debug_dir = "data/debug"
-    os.makedirs(debug_dir, exist_ok=True)
-
 
     # -------------------------
     # MODEL
     # -------------------------
-    model = YOLO("models/yolo11n.pt")
+    model = YOLO("models/yolo11s.pt")  # s modeli daha stabil ID veriyor
 
     # -------------------------
     # DETECTOR
@@ -30,21 +26,19 @@ def main():
     )
 
     # -------------------------
-    # PERFORMANCE MANAGER
+    # TRACKER
     # -------------------------
-    performance = PerformanceManager(
-        target_fps=20.0
-    )
+    tracker = Tracker()
 
     # -------------------------
-    # INPUT (VIDEO)
+    # INPUT
     # -------------------------
-    input_source = VideoInput("data/videos/test.mp4")
+    input_source = VideoInput("data/videos/test5.mp4")
     input_source.open()
 
     frame_id = 0
-    frame_count = 0
-    
+    CONF_THRESHOLD = 0.45  # çok düşük yapma
+    FIXED_SIZE = 640       # resolution sabit
 
     try:
         while True:
@@ -52,50 +46,58 @@ def main():
             if frame is None:
                 print("[INFO] Video bitti")
                 break
- 
-            frame_id += 1
-            # Resolution adaptasyonu
-            target_w, target_h = performance.get_resolution()
-            frame = input_source.resize(frame, target_w, target_h)
 
-            # Inference
+            frame_id += 1
+
+            # -------------------------
+            # SABİT RESOLUTION
+            # -------------------------
+            frame = input_source.resize(frame, FIXED_SIZE, FIXED_SIZE)
+
+            # -------------------------
+            # INFERENCE
+            # -------------------------
             detections, system_fps, conf = detector.infer(frame)
 
-            #Visualizer
-            frame = draw_detections(frame,detections)
+            # Confidence filtresi
+            filtered_dets = []
+            for det in detections:
+                if det["confidence"] >= CONF_THRESHOLD:
+                    filtered_dets.append(det["bbox"])
+
+            # -------------------------
+            # TRACKING
+            # -------------------------
+            tracks = tracker.update(filtered_dets)
+
+            # -------------------------
+            # VISUALIZATION
+            # -------------------------
+            frame = draw_detections(frame, detections)   # raw detection (isteğe bağlı)
+            frame = draw_tracks(frame, tracks)           # confirmed tracks
+
             frame = draw_telemetry(
-                frame, 
-                fps=system_fps,  #kontrol et
-                conf=conf,
-                resolution=frame.shape[:2]
+                frame,
+                fps=system_fps,
+                num_dets=len(filtered_dets),
+                num_tracks=len(tracks)
             )
 
-            if frame_id % 30 == 0:
-                save_path = os.path.join(debug_dir, f"frame_{frame_id:04d}.jpg")
-                cv2.imwrite(save_path, frame)
-                print(f"[DEBUG] Görüntü kaydedildi: {save_path}")
+            cv2.imshow("Air Defence System", frame)
 
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
 
-            # sadece görmek için (WSL'de pencere açmayacağız)
-            # cv2.imshow("Air Defence System", frame)
-
-            # Performance state update
-            performance.update(system_fps)
-
-            # -------------------------
-            # LOG (GUI YOK)
-            # -------------------------
-            frame_count += 1
             print(
-                f"[FRAME {frame_count:04d}] "
+                f"[FRAME {frame_id:04d}] "
                 f"FPS: {system_fps:5.2f} | "
-                f"Conf: {conf:.2f} | "
-                f"Detections: {len(detections)} | "
-                f"Res: {target_w}x{target_h}"
+                f"Dets: {len(filtered_dets)} | "
+                f"Tracks: {len(tracks)}"
             )
 
     finally:
         input_source.close()
+        cv2.destroyAllWindows()
         print("[INFO] Sistem kapatıldı")
 
 

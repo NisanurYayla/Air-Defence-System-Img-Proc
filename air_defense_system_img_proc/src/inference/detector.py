@@ -16,9 +16,9 @@ class Detector:
         self,
         model,
         target_fps: float = 20.0,
-        conf_init: float = 0.25,
-        conf_min: float = 0.15,
-        conf_max: float = 0.6,
+        conf_init: float = 0.5,
+        conf_min: float = 0.4,
+        conf_max: float = 0.7,
         conf_step_up: float = 0.05,
         conf_step_down: float = 0.02,
         avg_window: int = 10
