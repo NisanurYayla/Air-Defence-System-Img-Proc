@@ -33,7 +33,7 @@ def main():
     # -------------------------
     # INPUT
     # -------------------------
-    input_source = VideoInput("data/videos/test5.mp4")
+    input_source = VideoInput("data/videos/test6.mp4")   #6
     input_source.open()
 
     frame_id = 0

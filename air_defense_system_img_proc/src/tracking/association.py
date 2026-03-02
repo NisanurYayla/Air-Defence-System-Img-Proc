@@ -48,10 +48,10 @@ def velocity_alignment(track_velocity, boxA, boxB):
 
 
 def associate(tracks, detections,
-              iou_weight=0.6,
-              center_weight=0.3,
-              vel_weight=0.1,
-              match_threshold=0.25):
+              iou_weight=0.4,      # IoU'ya çok güvenme (hızlı drone'da düşer)
+              center_weight=0.5,   # Merkeze daha çok güven (mesafe daha istikrarlıdır)
+              vel_weight=0.1,      # Hız uyumu kalsın
+              match_threshold=0.15): # Eşiği düşür! (Tolerans artsın)
 
     if len(tracks) == 0:
         return [], [], list(range(len(detections)))

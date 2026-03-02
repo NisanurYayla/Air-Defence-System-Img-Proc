@@ -18,6 +18,7 @@ class Track:
         self.center = self._compute_center(self.bbox)
         self.prev_center = self.center.copy()
         self.velocity = np.array([0.0, 0.0])
+        self.alpha = 0.7  # smoothing katsayısı
 
         self.age = 1
         self.hits = 1

@@ -7,9 +7,9 @@ class Tracker:
         self.tracks = []
         self.next_id = 1
 
-        self.confirm_hits = 3
-        self.lost_threshold = 5
-        self.delete_threshold = 15
+        self.confirm_hits = 2
+        self.lost_threshold = 30
+        self.delete_threshold = 60
 
     def update(self, detections):
         """
