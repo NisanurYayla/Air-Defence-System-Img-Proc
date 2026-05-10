@@ -37,7 +37,7 @@ def main():
     input_source.open()
 
     frame_id = 0
-    CONF_THRESHOLD = 0.45  # çok düşük yapma
+    CONF_THRESHOLD = 0.25  # çok düşük yapma
     FIXED_SIZE = 640       # resolution sabit
 
     try:
@@ -63,12 +63,15 @@ def main():
             filtered_dets = []
             for det in detections:
                 if det["confidence"] >= CONF_THRESHOLD:
-                    filtered_dets.append(det["bbox"])
-
+                    filtered_dets.append({
+                        "bbox": det["bbox"],
+                        "conf": det["confidence"],
+                        "class_id": det.get("class_id", -1)
+                    })
             # -------------------------
             # TRACKING
             # -------------------------
-            tracks = tracker.update(filtered_dets)
+            tracks = tracker.update(filtered_dets)   # şimdilik frame vermiyoruz
 
             # -------------------------
             # VISUALIZATION

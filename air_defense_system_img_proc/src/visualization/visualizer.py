@@ -53,14 +53,14 @@ def draw_tracks(frame, tracks):
     """
 
     for track in tracks:
-        bbox = track.bbox
+
+        # 🔥 Kalman'dan bbox al
+        bbox = track.get_bbox()
         x1, y1, x2, y2 = map(int, bbox)
 
-        # Ana kutu (yeşil)
         color = (0, 255, 0)
         cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
 
-        # ID etiketi
         label = f"ID {track.id}"
         cv2.putText(
             frame,
@@ -73,12 +73,14 @@ def draw_tracks(frame, tracks):
             cv2.LINE_AA
         )
 
-        # Merkez noktası
-        cx, cy = map(int, track.center)
+        # 🔥 Kalman state
+        x, y, vx, vy, _, _ = track.kf.x
+        cx, cy = int(x), int(y)
+
+        # center
         cv2.circle(frame, (cx, cy), 3, (0, 0, 255), -1)
 
-        # Velocity vektörü (küçük ok)
-        vx, vy = track.velocity
+        # velocity arrow
         end_point = (int(cx + vx * 5), int(cy + vy * 5))
 
         cv2.arrowedLine(
@@ -90,11 +92,9 @@ def draw_tracks(frame, tracks):
             tipLength=0.4
         )
 
-        # Trail (son 10 merkez)
-        for i in range(1, len(track.history)):
-            pt1 = tuple(map(int, track.history[i - 1]))
-            pt2 = tuple(map(int, track.history[i]))
-            cv2.line(frame, pt1, pt2, (0, 150, 255), 1)
+        for track in tracks:
+            if track.time_since_update > 1:
+                continue
 
     return frame
 
